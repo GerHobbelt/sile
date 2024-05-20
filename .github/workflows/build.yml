@@ -61,7 +61,7 @@ jobs:
           files: |
             sile-${{ env.VERSION }}.pdf
             sile-${{ env.VERSION }}.zip
-            sile-${{ env.VERSION }}.tar.xz
+            sile-${{ env.VERSION }}.tar.zst
 
   build-nix:
     runs-on: ubuntu-22.04
@@ -78,9 +78,9 @@ jobs:
             .sources
           key: fonts-${{ hashFiles('Makefile-fonts') }}
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v9
+        uses: DeterminateSystems/nix-installer-action@v10
       - name: Cache Nix dependencies
-        uses: DeterminateSystems/magic-nix-cache-action@v3
+        uses: DeterminateSystems/magic-nix-cache-action@v4
       - name: Setup developer environment
         run: |
           nix develop --command ./bootstrap.sh
