@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.15.5](https://github.com/sile-typesetter/sile/compare/v0.15.4...v0.15.5) (2024-08-29)
+
+
+### New Features
+
+* **packages:** Support biblatex date field and improve date formatting ([5169d67](https://github.com/sile-typesetter/sile/commit/5169d678588bd47bc86b9b65686b9408f14f0208))
+
+
+### Bug Fixes
+
+* **build:** Fix distribution of unit tests clean up dist file list ([00abf9b](https://github.com/sile-typesetter/sile/commit/00abf9b9497e9bfa8565b7768479ef0e241522bb))
+* **classes:** Make document state available during class's post init ([71336b9](https://github.com/sile-typesetter/sile/commit/71336b9434a3dc90601ac73a94e80e6f0da9db58))
+* **cli:** Suppress trace info in quiet for warnings but do show errors ([e12dcc9](https://github.com/sile-typesetter/sile/commit/e12dcc9d07ead3e70c2f1bee9874a4be0ce574e4))
+* **packages:** Parse and split all bibtex name fields ([e3a7dc1](https://github.com/sile-typesetter/sile/commit/e3a7dc197e86f651edac1915c288b1085ecbb041)), closes [#2052](https://github.com/sile-typesetter/sile/issues/2052)
+* **packages:** Use non-breakable space in bibTeX name splitting, not tilde ([f4ea4ed](https://github.com/sile-typesetter/sile/commit/f4ea4ed0a24ea9d821dfed0d8e20cadd78f6d95d))
+
 ## [0.15.4](https://github.com/sile-typesetter/sile/compare/v0.15.3...v0.15.4) (2024-06-28)
 
 
@@ -74,7 +90,7 @@ the next start of a line. This means that calling any variant of `\skip`
 inline in a paragraph will result in content beginning on a new line
 without using the parindent setting.
 
-Fixing this change in behaviour requires either explicitly resetting the
+Fixing this change in behavior requires either explicitly resetting the
 current.parindent setting *after* it is initially used or explicitly
 ending a paragraph before or after placing a vertical skip.
 * **inputters:** Input documents using the SIL language will now retain
@@ -107,7 +123,7 @@ reorg
 * **classes:** The "center", "raggedleft" and "raggedright"
 environments formerly reset the margins (left or right skips), meaning
 they'd take the full frame width. They all cancelled the paragraph
-indent. The new behaviour honors the fixed part of the parent context's
+indent. The new behavior honors the fixed part of the parent context's
 margins, meaning that if you have an environment playing with margins
 such as an epigraph or an indented quote, those margins are not lost.
 The raggedleft and raggedright environment also now no longer cancel the
@@ -159,7 +175,7 @@ that do not support it will neet to set the `ruby.opentype` feature to
 * **classes:** The former implementation of the "em" command did not
 support nesting and was just setting the font style to italic. The
 command now alternates italic and regular when nested.
-* **packages:** The current (pseudo) idempotent behaviour when loading
+* **packages:** The current (pseudo) idempotent behavior when loading
 a package potentially clobbers anything that has been modified
 since the last load. Loading a package, then modifying a function it
 provides, then loading the same package again will clobber the
@@ -167,7 +183,7 @@ modifiecation. This is good for idempotency but not very good for user
 experience when you may not be modifying all aspects of a document
 render pipeline at once, as in when using templates.
 
-This change makes the default behaviour to run setting, raw handler, and
+This change makes the default behavior to run setting, raw handler, and
 command registrations only once. An altertanive to :loadpackage() called
 :reloadpackage() can be used to force all these registrations to be
 rerun when the goal is to make sure of a specific state.
