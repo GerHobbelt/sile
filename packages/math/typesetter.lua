@@ -51,7 +51,7 @@ function ConvertMathML (_, content)
       return nil
    end
    if content.command == "math" or content.command == "mathml" then -- toplevel
-      return b.stackbox("V", convertChildren(content))
+      return b.stackbox("H", convertChildren(content))
    elseif content.command == "mrow" then
       return b.stackbox("H", convertChildren(content))
    elseif content.command == "mphantom" then
@@ -72,10 +72,15 @@ function ConvertMathML (_, content)
          or scriptType.upright
       local text = content[1]
       local attributes = {}
+      -- Attributes from the (default) oerator table
       if syms.symbolDefaults[text] then
          for attribute, value in pairs(syms.symbolDefaults[text]) do
             attributes[attribute] = value
          end
+      end
+      -- Overwrite with attributes from the element
+      for attribute, value in pairs(content.options) do
+         attributes[attribute] = value
       end
       if content.options.atom then
          if not atomTypeShort[content.options.atom] then
@@ -142,7 +147,7 @@ function ConvertMathML (_, content)
       if #children ~= 2 then
          SU.error("Wrong number of children in mfrac: " .. #children)
       end
-      return b.fraction(children[1], children[2])
+      return b.fraction(content.options, children[1], children[2])
    elseif content.command == "msqrt" then
       local children = convertChildren(content)
       -- "The <msqrt> element generates an anonymous <mrow> box called the msqrt base
@@ -177,6 +182,10 @@ function ConvertMathML (_, content)
       -- It's an mrow, but with some style attributes that we ignore.
       SU.warn("MathML mstyle is not fully supported yet")
       return b.stackbox("H", convertChildren(content))
+   elseif content.command == "mpadded" then
+      -- MathML Core 3.3.6.1: The <mpadded> element generates an anonymous <mrow> box
+      -- called the "impadded inner box"
+      return b.padded(content.options, b.stackbox("H", convertChildren(content)))
    else
       SU.error("Unknown math command " .. content.command)
    end
