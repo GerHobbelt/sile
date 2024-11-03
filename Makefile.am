@@ -79,11 +79,24 @@ EXTRA_DIST += $(MANUAL) $(FIGURES)
 EXTRA_DIST += src/embed.rs.in
 EXTRA_DIST += sil.abnf
 
+if EMBEDDED_RESOURCES
+EXTRA_DIST += $(SILEDATA) $(LUALIBRARIES)
+endif
+
 BUILT_SOURCES = $(BUILT_LUA_SOURCES) Makefile-distfiles
 
 CLEANFILES = $(MANUAL)
 
 DISTCLEANFILES = @AMINCLUDE@
+
+# The boilerplate Docker is setup as if GHCR was our primary, and the CI jobs also
+# manually override these values. But as long as we're manually running a sync of
+# the auto deployed GHCR emiages to Dokcer Hub, the manual invocations need extra help.
+export GHCR_REGISTRY ?= ghcr.io
+export GHCR_REPO ?= sile-typesetter/$(TRANSFORMED_PACKAGE_NAME)
+export DOCKER_REGISTRY ?= docker.io
+export DOCKER_REPO ?= siletypesetter/$(TRANSFORMED_PACKAGE_NAME)
+export DOCKER_TAG ?= HEAD
 
 # A classical use of the autoconf-archive include macro would expand
 # INC_AMINCLUDE here, but the perl script that inlines include statements
@@ -281,12 +294,12 @@ tagrelease:
 	test -z $$($(GIT) tag --points-at HEAD) || exit 0 # end if we are already on a release tag
 	$(GIT) diff-index --quiet --cached HEAD || exit 1 # die if anything staged but not committed
 	$(GIT) diff-files --quiet || exit 1 # die if any tracked files have unstagged changes
-	$(NPM) run release -- $(and $(RELTYPE),--release-as $(RELTYPE))
+	$(NPM) run release -- --preMajor $(and $(RELTYPE),--release-as $(RELTYPE))
 
 prerelease: test docs update_libtexpdf
 
 release-preview:
-	$(NPM) run release -- --dry-run $(and $(RELTYPE),--release-as $(RELTYPE))
+	$(NPM) run release -- --preMajor --dry-run $(and $(RELTYPE),--release-as $(RELTYPE))
 
 release: tagrelease
 
@@ -387,13 +400,6 @@ $(DEPDIRS): | Makefile-distfiles
 $(DEPFILES): | $(DEPDIRS)
 
 include $(wildcard $(DEPFILES))
-
-export GHCR_REGISTRY ?= ghcr.io
-export GHCR_REPO ?= sile-typesetter/$(TRANSFORMED_PACKAGE_NAME)
-
-export DOCKER_REGISTRY ?= docker.io
-export DOCKER_REPO ?= siletypesetter/$(TRANSFORMED_PACKAGE_NAME)
-export DOCKER_TAG ?= HEAD
 
 docker-dep-check: .docker_deps .aur_deps
 	$(DIFF) -u $^
