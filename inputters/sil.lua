@@ -175,9 +175,14 @@ end
 function inputter:parse (doc)
    local status, result = pcall(self._parser, doc)
    if not status then
-      return SU.error(([[Unable to parse input document to an AST tree. Parser error:
+      return SU.error(([[
+         Unable to parse input document to an AST tree
 
-%s  thrown from document beginning]]):format(pl.stringx.indent(result, 6)))
+         Parser error:
+
+           %s
+
+         thrown from document beginning.]]):format(pl.stringx.indent(result, 6)))
    end
    resetCache()
    local top = ast_from_parse_tree(result[1], doc, 0)
