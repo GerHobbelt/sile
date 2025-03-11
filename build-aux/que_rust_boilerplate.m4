@@ -15,7 +15,6 @@ AC_DEFUN_ONCE([QUE_RUST_BOILERPLATE], [
         AX_REQUIRE_PROG([cargo])
         AX_REQUIRE_PROG([jq])
         AX_REQUIRE_PROG([rustc])
-        AX_REQUIRE_PROG([cmp])
         AX_REQUIRE_PROG([xargs])
         AM_COND_IF([DEVELOPER_MODE], [
                 AX_REQUIRE_PROG([git])
@@ -47,11 +46,13 @@ $($SED -E "s/@PACKAGE_VAR@/$PACKAGE_VAR/g;s/@PACKAGE_NAME@/$PACKAGE_NAME/g" buil
 
 AC_DEFUN([QUE_RUST_MODULE], [
 
+        QUE_LIBEXT
         AC_REQUIRE([AX_AM_MACROS])
+
         AX_ADD_AM_MACRO([dnl
 EXTRA_DIST += build-aux/que_rust_module.am
 
-$($SED -E "s/@MODULE@/$1/g;s/@SHARED_LIB_EXT@/$SHARED_LIB_EXT/g" build-aux/que_rust_module.am)
+$($SED -E "s/@MODULE@/$1/g" build-aux/que_rust_module.am)
 ])dnl
 
 ])
