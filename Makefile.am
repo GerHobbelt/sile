@@ -73,7 +73,7 @@ endif !EMBEDDED_RESOURCES
 dist_doc_DATA = README.md CHANGELOG.md
 dist_pdf_DATA = $(_MANUAL)
 dist_license_DATA = LICENSE.md
-EXTRA_DIST = spec tests documentation sile-dev-1.rockspec fontconfig.conf
+EXTRA_DIST = spec tests documentation sile-dev-1.rockspec rusile-dev-1.rockspec fontconfig.conf
 EXTRA_DIST += build-aux/action-updater.js build-aux/cargo-updater.js build-aux/config.ld build-aux/decore-automake.sh build-aux/git-version-gen
 EXTRA_DIST += Dockerfile build-aux/docker-bootstrap.sh build-aux/docker-fontconfig.conf hooks/build
 EXTRA_DIST += build-aux/xml-entities-to-lua.xsl
@@ -179,7 +179,7 @@ CARGO_FEATURE_ARGS += --features variations
 endif
 
 rusile.so: $(rusile_so_SOURCES) $(bin_PROGRAMS)
-	$(CARGO_ENV) $(CARGO) build $(CARGO_VERBOSE) $(RUSILE_FEATURE_ARG) $(CARGO_RELEASE_ARGS) -p rusile
+	$(CARGO_ENV) $(CARGO) build $(CARGO_VERBOSE) --target $(CARGO_TARGET_TRIPLE) $(RUSILE_FEATURE_ARG) $(CARGO_RELEASE_ARGS) -p rusile
 	$(INSTALL) @builddir@/target/@RUST_TARGET_SUBDIR@/lib$@ $@
 
 DEPDIR := .deps

@@ -30,9 +30,21 @@ local mathGrammar = function (_ENV)
          digit^1 -- Integer (digits only, ex: 123)
       ) / tostring
    local pos_natural = R("19") * digit^0 / tonumber
+
+   -- \left and \right delimiters = The TeXbook p. 148.
+   -- Characters with a delcode in TeX: The TeXbook p. 341
+   -- These are for use in \left...\right pairs.
+   -- We add the period (null delimiter) from p. 149-150.
+   -- We don't include the backslash here and handle it just after.
+   local delcode = S"([</|)]>."
+   -- Left/right is followed by a delimiter with delcode, or a command.
+   -- We use the delcode or backslash as terminator: commands such as
+   -- \rightarrow must still be allowed.
+   local leftright = function (s) return P(s) * (delcode + P"\\") end
+
    local ctrl_word = R("AZ", "az")^1
    local ctrl_symbol = P(1) - S"{}\\"
-   local ctrl_sequence_name = C(ctrl_word + ctrl_symbol) / 1
+   local ctrl_sequence_name = C(ctrl_word + ctrl_symbol) - leftright("left") - leftright("right") / 1
    local comment = (
          P"%" *
          P(1-eol)^0 *
@@ -56,7 +68,57 @@ local mathGrammar = function (_ENV)
    local group = P"{" * V"mathlist" * (P"}" + E("`}` expected"))
    -- Simple amsmath-like \text command (no embedded math)
    local textgroup = P"{" * C((1-P"}")^1) * (P"}" + E("`}` expected"))
+   -- TeX \left...\right group
+   local delim =
+      -- Delimiter with delcode
+      C(delcode) / function (d)
+         if d ~= "." then
+            return {
+               id = "atom",
+               d
+            }
+         end
+         return nil
+      end
+      -- Delimiter as escaped \{ or \}
+      + P"\\" * C(S"{}") / function (d)
+         return {
+            id = "atom",
+            d
+         }
+      end
+      -- Delimiter as command ex. \langle
+      + P"\\" * C(ctrl_sequence_name) / 1 / function (cmd)
+         return {
+            id = "command",
+            command = cmd
+         }
+      end
+
+      local leftrightgroup = P"\\left" * delim * V"mathlist" * P"\\right" * delim
+         / function (left, subformula, right)
+            if not left and not right then
+               -- No delimiters, return the subformula as-is
+               return subformula
+            end
+            -- Rewrap the subformula in a flagged mathlist
+            local mrow = {
+               id = "mathlist",
+               options = {},
+               is_paired_explicit = true, -- Internal flag
+               subformula
+            }
+            if left then
+               table.insert(mrow, 1, left)
+            end
+            if right then
+               table.insert(mrow, right)
+            end
+            return mrow
+         end
+
    local element_no_infix =
+      leftrightgroup + -- Important: before command
       V"def" +
       V"text" + -- Important: before command
       V"command" +
@@ -196,13 +258,22 @@ local commands = {}
 local objType = {
    tree = 1,
    str = 2,
+   unknown = 3,
 }
 
 local function inferArgTypes_aux (accumulator, typeRequired, body)
    if type(body) == "table" then
       if body.id == "argument" then
          local ret = accumulator
-         table.insert(ret, body.index, typeRequired)
+         while #ret < body.index do
+            -- Don't leave holes in the argument list.
+            -- This may happen if the argument are not used orderly, and the
+            -- entry might later be filled with the appropriate type... unless
+            -- the argument is not used at all.
+            -- CODE SMELL, but this recursive inference is hard to assess.
+            table.insert(ret, objType.unknown)
+         end
+         ret[body.index] = typeRequired
          return ret
       elseif body.id == "command" then
          if commands[body.command] then
@@ -412,6 +483,14 @@ local function compileToMathML_aux (_, arg_env, tree)
          else
             tree.command = "mrow"
          end
+      elseif tree.is_paired_explicit then
+         -- We already did the re-wrapping of open/close delimiters in the parser
+         -- via \left...\right, doing it would not harm but would add an extra mrow,
+         -- which we can avoid directly to keep the tree minimal.
+         -- N.B. We could have used the same flag, but it's easier to debug this way.
+         tree.is_paired = true
+         tree.is_paired_explicit = nil
+         tree.command = "mrow"
       else
          -- Re-wrap content from opening to closing operator in an implicit mrow,
          -- so stretchy operators apply to the correct span of content.
@@ -761,6 +840,20 @@ compileToMathML(
   \def{phantom}{\mphantom{#1}}
   \def{hphantom}{\mpadded[height=0, depth=0]{\mphantom{#1}}}
   \def{vphantom}{\mpadded[width=0]{\mphantom{#1}}}
+
+  % Stacking commands
+  % Plain LaTeX \stackrel is only supposed to be used on binary relations.
+  % It's a poor naming choice, and a poor design choice as well.
+  % Package "stackrel" on CTAN redefine its for relational operators, and
+  % provides a \stackbin for binary operators.
+  % Users would, without respect for semantics, use them interchangeably.
+  % We use the same definition for both, and expect the MathML layer to handle
+  % the content as appropriate based on the actual operators...
+  \def{stackrel}{\mover{#2}{#1}}
+  \def{stackbin}{\mover{#2}{#1}}
+  % Package "amsmath" went with its own generic \overset and \underset.
+  \def{overset}{\mover{#2}{#1}}
+  \def{underset}{\munder{#2}{#1}}
 ]==],
    })
 )
