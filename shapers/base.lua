@@ -27,13 +27,18 @@ shaper._name = "base"
 
 function shaper:_init ()
    SU._avoid_base_class_use(self)
-
    -- Function for testing shaping in the repl
    -- TODO, figure out a way to explicitly register things in the repl env
    _G["makenodes"] = function (token, options)
       return SILE.shaper:createNnodes(token, SILE.font.loadDefaults(options or {}))
    end
+   self:_declareBaseSettings()
+   self:declareSettings()
+end
 
+function shaper:declareSettings () end
+
+function shaper:_declareBaseSettings ()
    SILE.settings:declare({
       parameter = "shaper.variablespaces",
       type = "boolean",
@@ -106,22 +111,22 @@ function shaper:measureChar (char)
 end
 
 -- Given a text and some font options, return a bunch of boxes
-function shaper.shapeToken (_, _, _)
+function shaper:shapeToken (_, _)
    SU.error("Abstract function shapeToken called", true)
 end
 
 -- Given font options, select a font. We will handle
 -- caching here. Returns an arbitrary, implementation-specific
 -- object (ie a PAL for Pango, font number for libtexpdf, ...)
-function shaper.getFace (_)
+function shaper:getFace ()
    SU.error("Abstract function getFace called", true)
 end
 
-function shaper.addShapedGlyphToNnodeValue (_, _, _)
+function shaper:addShapedGlyphToNnodeValue (_, _)
    SU.error("Abstract function addShapedGlyphToNnodeValue called", true)
 end
 
-function shaper.preAddNodes (_, _, _) end
+function shaper:preAddNodes (_, _) end
 
 function shaper:createNnodes (token, options)
    options.tracking = SILE.settings:get("shaper.tracking")
@@ -195,7 +200,7 @@ function shaper:formNnode (contents, token, options)
    })
 end
 
-function shaper.makeSpaceNode (_, options, item)
+function shaper:makeSpaceNode (options, item)
    local width
    if SILE.settings:get("shaper.variablespaces") then
       width = shapespace(item.width)
@@ -205,6 +210,6 @@ function shaper.makeSpaceNode (_, options, item)
    return SILE.types.node.glue(width)
 end
 
-function shaper.debugVersions (_) end
+function shaper:debugVersions () end
 
 return shaper

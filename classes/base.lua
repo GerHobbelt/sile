@@ -55,9 +55,12 @@ function class:_init (options)
       options = {}
    end
    SILE.languageSupport.loadLanguage("und") -- preload for unlocalized fallbacks
+   self:_declareBaseOptions()
    self:declareOptions()
    self:registerRawHandlers()
+   self:_declareBaseSettings()
    self:declareSettings()
+   self:_registerBaseCommands()
    self:registerCommands()
    self:setOptions(options)
    self:declareFrames(self.defaultFrameset)
@@ -110,7 +113,9 @@ function class:declareOption (option, setter)
    self.options[option] = setter
 end
 
-function class:declareOptions ()
+function class:declareOptions () end
+
+function class:_declareBaseOptions ()
    self:declareOption("class", function (_, name)
       if name then
          if self._legacy then
@@ -173,7 +178,9 @@ function class:declareOptions ()
    end)
 end
 
-function class.declareSettings (_)
+function class:declareSettings () end
+
+function class:_declareBaseSettings ()
    SILE.settings:declare({
       parameter = "current.parindent",
       type = "glue or nil",
@@ -326,7 +333,7 @@ end
 -- @tparam[opt] nil|string pack Information identifying the module registering the command for use in error and usage
 -- messages. Usually auto-detected.
 -- @see SILE.packages:registerCommand
-function class.registerCommand (_, name, func, help, pack)
+function class:registerCommand (name, func, help, pack)
    SILE.Commands[name] = func
    if not pack then
       local where = debug.getinfo(2).source
@@ -339,7 +346,7 @@ function class.registerCommand (_, name, func, help, pack)
    }
 end
 
-function class.registerRawHandler (_, format, callback)
+function class:registerRawHandler (format, callback)
    SILE.rawHandlers[format] = callback
 end
 
@@ -362,7 +369,10 @@ local function packOptions (options)
    return relevant
 end
 
-function class:registerCommands ()
+function class.registerCommands () end
+
+-- These need refactoring probably somewhere outside of the document class system
+function class:_registerBaseCommands ()
    local function replaceProcessBy (replacement, tree)
       if type(tree) ~= "table" then
          return tree

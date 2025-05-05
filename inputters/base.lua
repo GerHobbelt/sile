@@ -12,8 +12,6 @@ local inputter = pl.class()
 inputter.type = "inputter"
 inputter._name = "base"
 
-inputter._docclass = nil
-
 function inputter:_init (options)
    SU._avoid_base_class_use(self)
    self.options = options or {}
@@ -28,7 +26,7 @@ function inputter:classInit (options)
    end
    class = SILE.input.class or class or options.class or "plain"
    options.class = nil -- don't pass already consumed class option to constructor
-   constructor = self._docclass or constructor or SILE.require(class, "classes", true)
+   constructor = constructor or SILE.require(class, "classes", true)
    if constructor.id then
       SU.deprecated("std.object", "pl.class", "0.13.0", "0.14.0", string.format(_deprecated, constructor.id))
    end
@@ -58,7 +56,7 @@ function inputter:process (doc)
    return SILE.process(tree)
 end
 
-function inputter.findInTree (_, tree, command)
+function inputter:findInTree (tree, command)
    SU.deprecated("SILE.inputter:findInTree", "SU.ast.findInTree", "0.15.0", "0.17.0")
    return SU.ast.findInTree(tree, command)
 end
@@ -87,11 +85,11 @@ local function process_ambles (ambles)
    end
 end
 
-function inputter.preamble (_)
+function inputter:preamble ()
    process_ambles(SILE.input.preambles)
 end
 
-function inputter.postamble (_)
+function inputter:postamble ()
    process_ambles(SILE.input.postambles)
 end
 
