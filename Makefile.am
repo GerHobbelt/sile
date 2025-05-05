@@ -326,7 +326,7 @@ force: ;
 PHONY_DEVELOPER_TARGETS = busted compare coverage \
 	docker-dep-check docker-ghcr-to-hub docker-test-dist gource.webm lint luacheck luarocks-lint \
 	prerelease regression_previews regressions release release-preview stylua typos tagrelease \
-	test update_expecteds update_libtexpdf
+	test update_expecteds update_libtexpdf vendored-crates
 .PHONY: $(PHONY_DEVELOPER_TARGETS)
 
 if DEVELOPER_MODE
@@ -366,7 +366,7 @@ regressions: $(TESTSRCS) $(ACTUALS)
 
 check-local: regressions busted
 
-lint: luacheck luarocks-lint stylua
+lint: luacheck luarocks-lint stylua typos
 
 luarocks-lint: $(LUAMODSPEC)
 	$(LUAROCKS) lint $(LUAMODSPEC)
@@ -481,6 +481,11 @@ docker-test-dist: export DOCKERFILE = tests/Dockerfile-dist
 docker-test-dist: export DOCKER_TAG = dist-test
 docker-test-dist:
 	./hooks/build $(VERSION)
+
+vendored-crates: sile-vendored-crates-$(VERSION).tar.zst
+
+sile-vendored-crates-$(VERSION).tar.zst: cargo-vendor
+	tardir=vendor && $(am__tar) | $(ZSTD) -c $${ZSTD_CLEVEL-$${ZSTD_OPT--19}} > $@
 
 gource.webm:
 	$(MKDIR_P) /tmp/gravatars
